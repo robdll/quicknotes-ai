@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getNotesForUser } from '@/lib/notes'
+import { deleteNote } from './notes/actions'
 import { signout } from './login/actions'
 import { CreateNoteDialog } from '@/components/create-note-dialog'
 import { Button } from '@/components/ui/button'
@@ -75,17 +76,12 @@ export default async function NotesPage() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <CardTitle className="text-lg">{note.title}</CardTitle>
-                  {/* ============================================================
-                      TODO 3: DELETE NOTE
-                      ============================================================
-                      Implement a delete button that:
-                      1. Removes the note from Supabase
-                      2. Refreshes the notes list
-
-                      ============================================================ */}
-                  <Button variant="ghost" size="sm" disabled>
-                    Delete (TODO)
-                  </Button>
+                  <form action={deleteNote} className="shrink-0">
+                    <input type="hidden" name="noteId" value={note.id} />
+                    <Button variant="ghost" size="sm" type="submit">
+                      Delete
+                    </Button>
+                  </form>
                 </div>
                 <CardDescription>
                   {new Date(note.created_at).toLocaleDateString('en-US', {

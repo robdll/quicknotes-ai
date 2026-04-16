@@ -45,3 +45,34 @@ export async function createNote(formData: FormData) {
   revalidatePath('/')
   return {}
 }
+
+export async function deleteNote(formData: FormData): Promise<void> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    console.error('deleteNote: not signed in')
+    return
+  }
+
+  const rawId = formData.get('noteId')
+  if (typeof rawId !== 'string' || rawId.length === 0) {
+    console.error('deleteNote: missing noteId')
+    return
+  }
+
+  const { error } = await supabase
+    .from('notes')
+    .delete()
+    .eq('id', rawId)
+    .eq('user_id', user.id)
+
+  if (error) {
+    console.error('deleteNote:', error.message)
+    return
+  }
+
+  revalidatePath('/')
+}
