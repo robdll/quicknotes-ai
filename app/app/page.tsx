@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getNotesForUser } from '@/lib/notes'
 import { signout } from './login/actions'
+import { CreateNoteDialog } from '@/components/create-note-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
@@ -64,16 +65,7 @@ export default async function NotesPage() {
               AI Summarize (TODO)
             </Button>
 
-            {/* ================================================================
-                TODO 2: CREATE NEW NOTE
-                ================================================================
-                Implement a button/form that:
-                1. Shows a form to input title and content
-                2. Saves the new note to Supabase
-                3. Refreshes the notes list
-
-                ================================================================ */}
-            <Button disabled>+ New Note (TODO)</Button>
+            <CreateNoteDialog />
           </div>
         </div>
 
@@ -115,7 +107,7 @@ export default async function NotesPage() {
         {notes.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500 mb-4">No notes yet. Create your first note!</p>
-            <Button>+ Create Note</Button>
+            <CreateNoteDialog triggerLabel="+ Create Note" />
           </div>
         )}
       </main>
