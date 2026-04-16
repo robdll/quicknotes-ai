@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getNotesForUser } from '@/lib/notes'
 import { signout } from './login/actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,27 +25,11 @@ export default async function NotesPage() {
     redirect('/login')
   }
 
-  // ===========================================================================
-  // TODO 1: CONNECT NOTES TO DATABASE
-  // ===========================================================================
-  // Replace this hardcoded array with real data from Supabase.
-  
-  const hardcodedNotes = [
-    {
-      id: '1',
-      title: 'Welcome to QuickNotes AI',
-      content:
-        'This is your first note! You can create, edit, and delete notes. Try the AI Summarize feature to get a summary of all your notes.',
-      created_at: '2024-01-15T10:00:00Z',
-    },
-    {
-      id: '2',
-      title: 'Meeting Notes - Project Kickoff',
-      content:
-        'Discussed project timeline and deliverables. Team agreed on weekly sprints. Next meeting scheduled for Friday at 2 PM.',
-      created_at: '2024-01-16T14:30:00Z',
-    }
-  ]
+  const { notes, error: notesError } = await getNotesForUser(supabase, user.id)
+
+  if (notesError) {
+    console.error('Failed to load notes:', notesError.message)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -93,7 +78,7 @@ export default async function NotesPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {hardcodedNotes.map((note) => (
+          {notes.map((note) => (
             <Card key={note.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -120,14 +105,14 @@ export default async function NotesPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-700 line-clamp-4">
-                  {note.content}
+                  {note.content ?? ''}
                 </p>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {hardcodedNotes.length === 0 && (
+        {notes.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500 mb-4">No notes yet. Create your first note!</p>
             <Button>+ Create Note</Button>
