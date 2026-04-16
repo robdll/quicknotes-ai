@@ -1,12 +1,11 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { getNotesForUser } from '@/lib/notes'
-import { deleteNote } from './notes/actions'
+import { NotesGrid } from '@/components/notes-grid'
+import { getNotesForUser, NOTES_PAGE_SIZE } from '@/lib/notes'
 import { signout } from './login/actions'
 import { CreateNoteDialog } from '@/components/create-note-dialog'
 import { SummarizeNotesDialog } from '@/components/summarize-notes-dialog'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 // =============================================================================
 // QUICKNOTES AI - TECHNICAL ASSESSMENT
@@ -25,7 +24,14 @@ export default async function NotesPage() {
     redirect('/login')
   }
 
-  const { notes, error: notesError } = await getNotesForUser(supabase, user.id)
+  const {
+    notes,
+    error: notesError,
+    hasMore: notesHasMore,
+  } = await getNotesForUser(supabase, user.id, {
+    limit: NOTES_PAGE_SIZE,
+    offset: 0,
+  })
 
   if (notesError) {
     console.error('Failed to load notes:', notesError.message)
@@ -51,41 +57,17 @@ export default async function NotesPage() {
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">My Notes</h2>
           <div className="flex gap-3">
-            <SummarizeNotesDialog hasNotes={notes.length > 0} />
+            <SummarizeNotesDialog
+              hasNotes={notes.length > 0 || Boolean(notesHasMore)}
+            />
 
             <CreateNoteDialog />
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {notes.map((note) => (
-            <Card key={note.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">{note.title}</CardTitle>
-                  <form action={deleteNote} className="shrink-0">
-                    <input type="hidden" name="noteId" value={note.id} />
-                    <Button variant="ghost" size="sm" type="submit">
-                      Delete
-                    </Button>
-                  </form>
-                </div>
-                <CardDescription>
-                  {new Date(note.created_at).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-700 line-clamp-4">
-                  {note.content ?? ''}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {notes.length > 0 && (
+          <NotesGrid initialNotes={notes} initialHasMore={notesHasMore ?? false} />
+        )}
 
         {notes.length === 0 && (
           <div className="text-center py-12">

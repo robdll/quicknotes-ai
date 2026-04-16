@@ -7,12 +7,44 @@ import {
   formatNotesForSummary,
   getNotesForUser,
   insertNoteForUser,
+  NOTES_PAGE_SIZE,
+  type NoteRow,
 } from '@/lib/notes'
 import { createClient } from '@/lib/supabase/server'
 
 const MAX_NOTES_CHARS = 10_000
 
 export type SummarizeNotesResult = { summary: string } | { error: string }
+
+export type LoadMoreNotesResult =
+  | { notes: NoteRow[]; hasMore: boolean }
+  | { error: string }
+
+export async function loadMoreNotes(offset: number): Promise<LoadMoreNotesResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'You must be signed in.' }
+  }
+
+  if (!Number.isFinite(offset) || offset < 0 || offset % NOTES_PAGE_SIZE !== 0) {
+    return { error: 'Invalid page offset.' }
+  }
+
+  const { notes, error, hasMore } = await getNotesForUser(supabase, user.id, {
+    limit: NOTES_PAGE_SIZE,
+    offset,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  return { notes, hasMore: hasMore ?? false }
+}
 
 export async function createNote(formData: FormData) {
   const supabase = await createClient()

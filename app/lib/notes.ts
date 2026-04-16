@@ -7,15 +7,41 @@ type NoteInsert = Database['public']['Tables']['notes']['Insert']
 
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>
 
+/** Notes per page on the home grid (`getNotesForUser` with `page` option). */
+export const NOTES_PAGE_SIZE = 5
+
+export type GetNotesPageOptions = { limit: number; offset: number }
+
 export async function getNotesForUser(
   supabase: ServerSupabase,
-  userId: string
-): Promise<{ notes: NoteRow[]; error: PostgrestError | null }> {
-  const { data, error } = await supabase
+  userId: string,
+  page?: GetNotesPageOptions
+): Promise<{
+  notes: NoteRow[]
+  error: PostgrestError | null
+  hasMore?: boolean
+}> {
+  let query = supabase
     .from('notes')
     .select('id, user_id, title, content, created_at, updated_at')
     .eq('user_id', userId)
     .order('created_at', { ascending: false })
+
+  if (page) {
+    const { limit, offset } = page
+    // Fetch one extra row to detect a following page without a separate count query.
+    query = query.range(offset, offset + limit)
+  }
+
+  const { data, error } = await query
+
+  if (page) {
+    const { limit } = page
+    const rows = data ?? []
+    const hasMore = rows.length > limit
+    const notes = hasMore ? rows.slice(0, limit) : rows
+    return { notes, error, hasMore }
+  }
 
   return { notes: data ?? [], error }
 }
