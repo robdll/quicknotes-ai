@@ -4,15 +4,13 @@ import { getNotesForUser } from '@/lib/notes'
 import { deleteNote } from './notes/actions'
 import { signout } from './login/actions'
 import { CreateNoteDialog } from '@/components/create-note-dialog'
+import { SummarizeNotesDialog } from '@/components/summarize-notes-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 // =============================================================================
 // QUICKNOTES AI - TECHNICAL ASSESSMENT
 // =============================================================================
-// Welcome! You need to implement 4 features in this file.
-// Look for TODO comments below for each feature.
-//
 // DATABASE SCHEMA:
 // notes (id, user_id, title, content, created_at, updated_at)
 
@@ -53,18 +51,7 @@ export default async function NotesPage() {
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900">My Notes</h2>
           <div className="flex gap-3">
-            {/* ================================================================
-                TODO 4: AI SUMMARIZE FEATURE
-                ================================================================
-                Implement a button that:
-                1. Fetches all user's notes
-                2. Sends them to OpenAI API to generate a summary
-                3. Displays the summary to the user (modal, alert, or new section)
-             
-                ================================================================ */}
-            <Button variant="secondary" disabled>
-              AI Summarize (TODO)
-            </Button>
+            <SummarizeNotesDialog hasNotes={notes.length > 0} />
 
             <CreateNoteDialog />
           </div>

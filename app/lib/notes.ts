@@ -51,3 +51,13 @@ export async function deleteNoteForUser(
 
   return { error }
 }
+
+/** Plain-text bundle of all notes for LLM summarization. */
+export function formatNotesForSummary(notes: NoteRow[]): string {
+  return notes
+    .map(
+      (n, i) =>
+        `### Note ${i + 1}: ${n.title}\n${(n.content ?? '').trim()}`
+    )
+    .join('\n\n---\n\n')
+}
