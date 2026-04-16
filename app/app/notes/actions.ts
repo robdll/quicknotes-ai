@@ -1,10 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { deleteNoteForUser, insertNoteForUser } from '@/lib/notes'
 import { createClient } from '@/lib/supabase/server'
-import type { Database } from '@/lib/supabase/types'
-
-type NoteInsert = Database['public']['Tables']['notes']['Insert']
 
 export async function createNote(formData: FormData) {
   const supabase = await createClient()
@@ -27,16 +25,10 @@ export async function createNote(formData: FormData) {
     return { error: 'Title is required.' }
   }
 
-  const row: NoteInsert = {
-    user_id: user.id,
+  const { error } = await insertNoteForUser(supabase, user.id, {
     title,
     content,
-  }
-
-  // Hand-written `Database` + `createServerClient` currently infer `.insert()` as `never`; 
-  // insert is valid at runtime (RLS allows authenticated inserts).
-  // @ts-expect-error — see above
-  const { error } = await supabase.from('notes').insert(row)
+  })
 
   if (error) {
     return { error: error.message }
@@ -63,11 +55,7 @@ export async function deleteNote(formData: FormData): Promise<void> {
     return
   }
 
-  const { error } = await supabase
-    .from('notes')
-    .delete()
-    .eq('id', rawId)
-    .eq('user_id', user.id)
+  const { error } = await deleteNoteForUser(supabase, user.id, rawId)
 
   if (error) {
     console.error('deleteNote:', error.message)

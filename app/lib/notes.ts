@@ -3,6 +3,7 @@ import type { createClient } from '@/lib/supabase/server'
 import type { Database } from '@/lib/supabase/types'
 
 export type NoteRow = Database['public']['Tables']['notes']['Row']
+type NoteInsert = Database['public']['Tables']['notes']['Insert']
 
 type ServerSupabase = Awaited<ReturnType<typeof createClient>>
 
@@ -17,4 +18,36 @@ export async function getNotesForUser(
     .order('created_at', { ascending: false })
 
   return { notes: data ?? [], error }
+}
+
+export async function insertNoteForUser(
+  supabase: ServerSupabase,
+  userId: string,
+  values: { title: string; content: string | null }
+): Promise<{ error: PostgrestError | null }> {
+  const row: NoteInsert = {
+    user_id: userId,
+    title: values.title,
+    content: values.content,
+  }
+
+  // Hand-written `Database` + `createServerClient` infer `.insert()` as `never`; insert is valid at runtime (RLS).
+  // @ts-expect-error — see above
+  const { error } = await supabase.from('notes').insert(row)
+
+  return { error }
+}
+
+export async function deleteNoteForUser(
+  supabase: ServerSupabase,
+  userId: string,
+  noteId: string
+): Promise<{ error: PostgrestError | null }> {
+  const { error } = await supabase
+    .from('notes')
+    .delete()
+    .eq('id', noteId)
+    .eq('user_id', userId)
+
+  return { error }
 }
